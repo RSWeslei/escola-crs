@@ -1,3 +1,4 @@
+const res = require('express/lib/response');
 const alunosService = require('../services/alunosService')
 
 const getAll = async (req, res) => {
@@ -48,8 +49,18 @@ const mediaAluno = async (req, res) => {
     }
 }
 
+const mediaAlunosPorPeriodo = async (req, res) => {
+    try {
+        const alunos = await alunosService.mediaAlunosPorPeriodo(req.body);
+        res.status(201).send(alunos)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+}
+
 module.exports.getAllAlunos = getAll
 module.exports.getAlunoById = getById
 module.exports.deleteAlunoById = deleteById
 module.exports.persistirAlunos = persistir
 module.exports.mediaAluno = mediaAluno
+module.exports.mediaAlunosPorPeriodo = mediaAlunosPorPeriodo

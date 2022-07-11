@@ -48,8 +48,9 @@ const persistir = async (params) => {
 const mediaAluno = async (params) =>
 {
     const {matricula, id_disciplina, data_inicial, data_final} = params
-    const sql = `select n.nota, n.peso from notas as n
+    const sql = `select n.nota, n.peso, p.nome from notas as n
     inner join alunos as al on (n.id_aluno = al.id)
+    inner join pessoas as p on (al.id_pessoa = p.id)
     where n.datahora between $1 and $2
     and al.matricula = $3 and n.id_disciplina = $4;`
     let aluno = await db.query(sql, [data_inicial, data_final, matricula, id_disciplina])
@@ -60,20 +61,42 @@ const mediaAluno = async (params) =>
         somaPesos += Number(aluno.peso)
     })
     media = media / somaPesos
-    let msg = 'Erro'
-    if (media >= 7) msg = 'Aprovado'
-    else if (media >= 5) msg = 'Recuperacao'
-    else if (media < 5) msg = 'Reprovado'
+    let msg = media >= 7 ? 'aprovado!' : media >=5 ? 'recuperacao!' : 'reprovado!'
+    msg = `O aluno ${aluno.rows[0].nome} foi ${msg}`
     return {
-        msg,
         media,
-        notas: aluno.rows
+        notas: aluno.rows,
+        msg
     }  
 }
 
-const mediaAlunos = async (params) => 
+const mediaAlunosPorPeriodo = async (params) => 
 {
+    const {id_disciplina, data_inicial, data_final} = params
 
+    const sql = `select sum(n.nota * n.peso) as nota, sum(n.peso) as peso, a.id, p.nome from notas as n
+    inner join alunos as a on (n.id_aluno = a.id)
+    inner join pessoas as p on (a.id_pessoa = p.id)
+    where n.id_disciplina = $1 and
+    datahora between $2 and $3
+    group by a.id, p.nome`
+    let notasAlunos = await db.query(sql, [id_disciplina, data_inicial, data_final])
+    let alunos = []
+    notasAlunos.rows.forEach(aluno => {
+        let media = aluno.nota / aluno.peso
+        let msg = media >= 7 ? 'Aprovado!' : media >=5 ? 'Recuperacao!' : 'Reprovado!'
+        msg = `O aluno ${aluno.nome} foi ${msg}`
+        alunos.push({
+           id_aluno: aluno.id,
+           nome: aluno.nome,
+           media,
+           id_disciplina,
+           msg
+        })
+    })
+    return alunos
+
+    console.log(alunos);
 }
 
 module.exports.getAllAlunos = getAll
@@ -81,3 +104,4 @@ module.exports.getAlunoById = getById
 module.exports.deleteAlunoById = deleteById
 module.exports.persistirAlunos = persistir
 module.exports.mediaAluno = mediaAluno
+module.exports.mediaAlunosPorPeriodo = mediaAlunosPorPeriodo

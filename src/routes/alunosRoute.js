@@ -6,4 +6,5 @@ module.exports = (app) => {
     app.delete('/alunos/:id', alunosController.deleteAlunoById);
     app.post('/alunos', alunosController.persistirAlunos);
     app.post('/alunos/media-aluno', alunosController.mediaAluno);
+    app.post('/alunos/media-aluno-periodo', alunosController.mediaAlunosPorPeriodo);
 }
